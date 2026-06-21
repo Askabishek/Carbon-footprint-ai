@@ -15,12 +15,11 @@ st.set_page_config(
 # Secure API Key Handling with validation
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# --- Efficiency: Cached AI function ---
 @st.cache_data(show_spinner=False, ttl=3600)
 def get_gemini_tips(footprint_data: Dict[str, float], region: str) -> str:
     """Fetches AI-driven sustainability tips with caching for efficiency."""
     if not GEMINI_API_KEY:
-        return "⚠️ **Security Alert:** Gemini API Key not found. Please set `GEMINI_API_KEY` environment variable."
+        return get_fallback_tips(footprint_data)
     
     try:
         genai.configure(api_key=GEMINI_API_KEY)
@@ -38,7 +37,22 @@ def get_gemini_tips(footprint_data: Dict[str, float], region: str) -> str:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"📡 **Connection Error:** Unable to reach AI uplink. ({str(e)})"
+        return get_fallback_tips(footprint_data)
+
+def get_fallback_tips(footprint_data: Dict[str, float]) -> str:
+    """Rule-based tips used when Gemini API is unavailable."""
+    tips = []
+    if footprint_data['driving'] > 1.0:
+        tips.append("🚗 **Mobility:** Consider carpooling, public transit, or an electric vehicle to cut driving emissions.")
+    if footprint_data['flights'] > 0.3:
+        tips.append("✈️ **Aviation:** Combine trips or choose direct flights to reduce per-trip emissions.")
+    if footprint_data['energy'] > 0.8:
+        tips.append("⚡ **Energy:** Switch to LED lighting and unplug idle electronics to save power.")
+    if footprint_data['diet'] > 2.0:
+        tips.append("🥗 **Diet:** Reducing meat intake by 2 days/week meaningfully lowers your footprint.")
+    if not tips:
+        tips.append("✅ Your footprint is well-optimized. Keep up the sustainable habits!")
+    return "\n\n".join(tips)
 
 # --- Accessibility & Futuristic Styling ---
 st.markdown("""
