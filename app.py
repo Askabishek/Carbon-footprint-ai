@@ -68,7 +68,7 @@ def get_gemini_tips(footprint_data, region):
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         # Using gemini-1.5-flash for faster response and generous free tier
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
         You are an environmental sustainability expert. 
