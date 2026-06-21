@@ -61,13 +61,27 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+def get_fallback_tips(footprint_data):
+    """Rule-based tips used when Gemini API is unavailable."""
+    tips = []
+    if footprint_data['driving'] > 1.0:
+        tips.append("🚗 **Mobility:** Your driving emissions are significant. Consider carpooling, public transit, or an electric vehicle to cut this down.")
+    if footprint_data['flights'] > 0.3:
+        tips.append("✈️ **Aviation:** Flights are a major contributor. Try combining trips or choosing direct flights to reduce per-trip emissions.")
+    if footprint_data['energy'] > 0.8:
+        tips.append("⚡ **Energy:** Switch to LED lighting, unplug idle electronics, and consider renewable energy plans where available.")
+    if footprint_data['diet'] > 2.0:
+        tips.append("🥗 **Diet:** Reducing meat intake by even 2 days a week can meaningfully lower your dietary footprint.")
+    if not tips:
+        tips.append("✅ Your footprint is well-optimized across all categories. Keep up the sustainable habits!")
+    return "\n\n".join(tips)
+
 def get_gemini_tips(footprint_data, region):
     if not GEMINI_API_KEY:
-        return "⚠️ Gemini API Key not found in environment variables. Set GEMINI_API_KEY to receive AI tips."
+        return get_fallback_tips(footprint_data)
     
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        # Using gemini-1.5-flash for faster response and generous free tier
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
@@ -83,7 +97,8 @@ def get_gemini_tips(footprint_data, region):
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"Error connecting to Gemini: {str(e)}"
+        return get_fallback_tips(footprint_data)
+
 
 def main():
     # --- Header ---
